@@ -1,110 +1,103 @@
 # 🐋 Whale Tracker Agent
 
-Autonomous AI agent that monitors whale wallet movements across multiple blockchains, detects patterns, generates trading theses, and delivers real-time alerts.
+> AI agent that monitors whale wallets across 4 blockchains, detects patterns in real-time, and alerts you before the market moves.
 
-## Features
+## What it does
 
-- **Multi-Chain Monitoring** — Ethereum, BSC, Solana, Base, Arbitrum
-- **Pattern Detection** — Accumulation, dump, bridge, large transfer, token rotation
-- **Real-Time Alerts** — Telegram bot, Discord webhook, terminal dashboard
-- **LLM Analysis** — Auto-generate thesis for each whale movement
-- **Portfolio Tracking** — Track whale holdings, PnL, token allocation
-- **Smart Filtering** — Ignore noise, only alert on significant movements
+```
+Wallet Activity → Pattern Detection → AI Analysis → Alerts
+     (ETH/BSC/         (5 types)        (thesis)    (TG/Discord)
+      Base/Arb)
+```
+
+**Detected Patterns:**
+- 🟠 **Accumulation** — Whale buying aggressively (+5% in 24h)
+- 🔴 **Dump** — Whale selling (-10% in 6h)
+- 🟡 **Large Transfer** — Single tx > $500K
+- 🟡 **Token Rotation** — Selling A → Buying B
+- 🟡 **Bridge** — Cross-chain via LayerZero, Arbitrum Bridge, etc.
+
+## Install
+
+```bash
+git clone https://github.com/bizernam-cyber/whale-tracker-agent
+cd whale-tracker-agent
+pip install -e .
+
+# Set RPC
+export ETH_RPC_URL="https://eth.llamarpc.com"
+```
+
+## Usage
+
+```bash
+# Watch a whale
+whale-track watch 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045 --label "Vitalik"
+
+# Scan 7 days of activity
+whale-track scan 0xd8dA...6045 --chain eth --days 7
+
+# Real-time monitor (alerts on movements > 100 ETH)
+whale-track monitor --chain eth --min-amount 100
+
+# Check balance
+whale-track balance 0xd8dA...6045
+```
+
+## Python API
+
+```python
+import asyncio
+from whale_tracker.agent import WhaleTracker
+
+async def main():
+    tracker = WhaleTracker()
+
+    # Track
+    await tracker.watch("0xd8dA...6045", chain="ethereum", label="Vitalik")
+
+    # Scan
+    result = await tracker.scan("0xd8dA...6045", days=7)
+    print(f"Transactions: {result['transaction_count']}")
+    print(f"Patterns: {[p['type'] for p in result['patterns']]}")
+
+    # Monitor (real-time)
+    await tracker.monitor()
+
+asyncio.run(main())
+```
+
+## Alerts
+
+| Channel | Setup |
+|---------|-------|
+| Terminal | Default — Rich panels, no config needed |
+| Telegram | Set `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` in .env |
+| Discord | Set `DISCORD_WEBHOOK_URL` in .env |
+
+## Supported Chains
+
+| Chain | Status |
+|-------|--------|
+| Ethereum | ✅ Full support |
+| BNB Chain | ✅ Full support |
+| Base | ✅ Full support |
+| Arbitrum | ✅ Full support |
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────┐
-│                 Whale Tracker Agent                   │
-├────────────┬──────────────┬──────────────┬───────────┤
-│ Chain      │ Detection    │ Alerts       │ Analysis  │
-│ Scanners   │ Engine       │ System       │ Engine    │
-│            │              │              │           │
-│ • EVM      │ • Threshold  │ • Telegram   │ • LLM     │
-│ • Solana   │ • Pattern    │ • Discord    │ • Thesis  │
-│ • Indexers │ • Frequency  │ • Terminal   │ • Scoring │
-└────────────┴──────────────┴──────────────┴───────────┘
-         │           │
-    ┌────┴─────┐ ┌───┴───┐
-    │ RPC Nodes│ │SQLite │ (state)
-    └──────────┘ └───────┘
+┌─────────────────────────────────────────────────┐
+│              Whale Tracker Agent                 │
+├───────────┬─────────────┬───────────┬───────────┤
+│  Chain    │  Detection  │  Alerts   │  Analysis │
+│  Scanners │  Engine     │  System   │  Engine   │
+│           │             │           │           │
+│  EVM      │  Threshold  │  Telegram │  LLM      │
+│  (4 chains│  Pattern    │  Discord  │  Thesis   │
+│  unified) │  Frequency  │  Terminal │  Scoring  │
+└───────────┴─────────────┴───────────┴───────────┘
 ```
-
-## Quick Start
-
-```bash
-pip install -e .
-
-# Configure
-cp .env.example .env
-# Edit .env with your RPC endpoints and alert tokens
-
-# Track a whale
-whale-track watch 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
-
-# Scan recent activity
-whale-track scan 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045 --chain eth --days 7
-
-# Monitor mode (real-time)
-whale-track monitor --chain eth --min-amount 100
-
-# List tracked whales
-whale-track list
-```
-
-## Configuration
-
-```yaml
-# config.yaml
-chains:
-  ethereum:
-    rpc: ${ETH_RPC_URL}
-    explorer_api: ${ETHERSCAN_API_KEY}
-    enabled: true
-  bsc:
-    rpc: ${BSC_RPC_URL}
-    explorer_api: ${BSCSCAN_API_KEY}
-    enabled: true
-  solana:
-    rpc: ${SOLANA_RPC_URL}
-    enabled: true
-
-alerts:
-  telegram:
-    bot_token: ${TELEGRAM_BOT_TOKEN}
-    chat_id: ${TELEGRAM_CHAT_ID}
-  discord:
-    webhook_url: ${DISCORD_WEBHOOK_URL}
-  terminal:
-    enabled: true
-
-detection:
-  min_amount_usd: 100000
-  patterns:
-    accumulation:
-      threshold_pct: 5
-      window_hours: 24
-    dump:
-      threshold_pct: 10
-      window_hours: 6
-    large_transfer:
-      min_amount_usd: 500000
-
-llm:
-  provider: openai
-  model: gpt-4o
-```
-
-## Detection Patterns
-
-| Pattern | Trigger | Description |
-|---------|---------|-------------|
-| Accumulation | +5% holdings in 24h | Whale buying aggressively |
-| Dump | -10% holdings in 6h | Whale selling |
-| Large Transfer | >$500K single tx | Significant capital movement |
-| Bridge | Cross-chain transfer | Asset moving between chains |
-| Token Rotation | Sell A → Buy B | Portfolio rebalancing |
-| DEX Activity | Swap on DEX | Direct market impact |
 
 ## License
 
