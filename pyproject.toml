@@ -43,8 +43,8 @@ dev = [
 whale-track = "whale_tracker.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/m226465-arch/whale-tracker-agent"
-Repository = "https://github.com/m226465-arch/whale-tracker-agent"
+Homepage = "https://github.com/bizernam-cyber/whale-tracker-agent"
+Repository = "https://github.com/bizernam-cyber/whale-tracker-agent"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/whale_tracker"]
