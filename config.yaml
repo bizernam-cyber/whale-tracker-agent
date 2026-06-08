@@ -1,0 +1,55 @@
+# Whale Tracker Agent — Configuration
+
+chains:
+  ethereum:
+    rpc: ${ETH_RPC_URL}
+    explorer_api: ${ETHERSCAN_API_KEY}
+    enabled: true
+    block_time: 12.0
+    confirmations: 12
+  bsc:
+    rpc: ${BSC_RPC_URL}
+    explorer_api: ${BSCSCAN_API_KEY}
+    enabled: true
+    block_time: 3.0
+    confirmations: 15
+  base:
+    rpc: ${BASE_RPC_URL}
+    enabled: true
+    block_time: 2.0
+    confirmations: 12
+  arbitrum:
+    rpc: ${ARB_RPC_URL}
+    enabled: true
+    block_time: 0.25
+    confirmations: 12
+
+alerts:
+  telegram:
+    bot_token: ${TELEGRAM_BOT_TOKEN}
+    chat_id: ${TELEGRAM_CHAT_ID}
+    enabled: false
+  discord:
+    webhook_url: ${DISCORD_WEBHOOK_URL}
+    enabled: false
+  terminal:
+    enabled: true
+
+detection:
+  min_amount_usd: 100000
+  poll_interval: 12
+  max_blocks_per_scan: 100
+  patterns:
+    accumulation:
+      threshold_pct: 5.0
+      window_hours: 24.0
+    dump:
+      threshold_pct: 10.0
+      window_hours: 6.0
+    large_transfer:
+      min_amount_usd: 500000
+
+llm:
+  provider: openai
+  model: gpt-4o
+  temperature: 0.1

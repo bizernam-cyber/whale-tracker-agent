@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whale Tracker Agent — AI-Powered Whale Monitoring</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0f;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        /* Animated ocean gradient */
+        .bg-ocean {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 120% 60% at 50% 100%, rgba(6,78,153,0.25) 0%, transparent 60%),
+                radial-gradient(ellipse 80% 40% at 20% 80%, rgba(59,130,246,0.12) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 40% at 80% 80%, rgba(16,185,129,0.08) 0%, transparent 50%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Floating particles */
+        .particles {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: rgba(59,130,246,0.3);
+            border-radius: 50%;
+            animation: float linear infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        .particle:nth-child(1) { left: 10%; animation-duration: 15s; animation-delay: 0s; }
+        .particle:nth-child(2) { left: 25%; animation-duration: 18s; animation-delay: 2s; }
+        .particle:nth-child(3) { left: 40%; animation-duration: 12s; animation-delay: 4s; }
+        .particle:nth-child(4) { left: 55%; animation-duration: 20s; animation-delay: 1s; }
+        .particle:nth-child(5) { left: 70%; animation-duration: 16s; animation-delay: 3s; }
+        .particle:nth-child(6) { left: 85%; animation-duration: 14s; animation-delay: 5s; }
+        .particle:nth-child(7) { left: 15%; animation-duration: 17s; animation-delay: 6s; }
+        .particle:nth-child(8) { left: 60%; animation-duration: 13s; animation-delay: 7s; }
+
+        .wrapper { position: relative; z-index: 1; }
+
+        /* Nav */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 0 32px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(10,10,15,0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .logo-whale {
+            font-size: 24px;
+            animation: swim 3s ease-in-out infinite;
+        }
+
+        @keyframes swim {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(3px) rotate(2deg); }
+            75% { transform: translateX(-3px) rotate(-2deg); }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-links a {
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.05); }
+
+        .nav-gh {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-gh:hover { background: rgba(255,255,255,0.1); }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 100px 32px 60px;
+            text-align: center;
+        }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 14px;
+            border-radius: 100px;
+            background: rgba(59,130,246,0.1);
+            border: 1px solid rgba(59,130,246,0.2);
+            color: #60a5fa;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 28px;
+        }
+
+        .hero h1 {
+            font-size: 80px;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -3px;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 .line1 { color: #fff; }
+        .hero h1 .line2 {
+            background: linear-gradient(90deg, #3b82f6, #06b6d4, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-sub {
+            font-size: 17px;
+            color: rgba(255,255,255,0.4);
+            max-width: 480px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 60px;
+        }
+
+        .btn-glow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 13px 26px;
+            background: linear-gradient(135deg, #2563eb, #0891b2);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(37,99,235,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        .btn-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 40px rgba(37,99,235,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+
+        .btn-ghost {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 13px 26px;
+            background: transparent;
+            color: rgba(255,255,255,0.7);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-ghost:hover { border-color: rgba(255,255,255,0.25); color: #fff; }
+
+        /* Live terminal */
+        .terminal-wrap {
+            max-width: 640px;
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.06);
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 60px rgba(59,130,246,0.05);
+        }
+
+        .term-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 18px;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .term-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .term-dot:nth-child(1) { background: #ef4444; }
+        .term-dot:nth-child(2) { background: #eab308; }
+        .term-dot:nth-child(3) { background: #22c55e; }
+        .term-title { margin-left: 10px; font-size: 12px; color: rgba(255,255,255,0.25); font-family: 'JetBrains Mono', monospace; }
+
+        .term-body {
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+            line-height: 1.7;
+        }
+
+        .t-prompt { color: #3b82f6; }
+        .t-cmd { color: #e2e8f0; }
+        .t-flag { color: #f59e0b; }
+        .t-arg { color: #a78bfa; }
+        .t-dim { color: rgba(255,255,255,0.25); }
+        .t-green { color: #10b981; }
+        .t-red { color: #ef4444; }
+        .t-cyan { color: #06b6d4; }
+        .t-whale { color: #3b82f6; }
+
+        /* Pattern cards in terminal */
+        .t-pattern {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .t-pattern.critical { background: rgba(239,68,68,0.15); color: #f87171; }
+        .t-pattern.high { background: rgba(245,158,11,0.15); color: #fbbf24; }
+        .t-pattern.medium { background: rgba(59,130,246,0.15); color: #60a5fa; }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 1px;
+            max-width: 600px;
+            margin: -30px auto 0;
+            background: rgba(255,255,255,0.04);
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat {
+            flex: 1;
+            padding: 24px 16px;
+            text-align: center;
+            background: rgba(10,10,15,0.9);
+        }
+
+        .stat-num {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: #3b82f6;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.35);
+            margin-top: 2px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Features */
+        .features {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 100px 32px;
+        }
+
+        .section-head {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-tag {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            color: #3b82f6;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        .section-head h2 {
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .feature-card {
+            padding: 24px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.04);
+            background: rgba(255,255,255,0.015);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(59,130,246,0.3), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover::before { opacity: 1; }
+        .feature-card:hover { border-color: rgba(59,130,246,0.15); transform: translateY(-3px); }
+
+        .feature-emoji { font-size: 28px; margin-bottom: 14px; }
+        .feature-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+        .feature-card p { font-size: 13px; color: rgba(255,255,255,0.35); line-height: 1.6; }
+
+        /* Chains */
+        .chains {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 60px 32px 80px;
+            text-align: center;
+        }
+
+        .chain-row {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 32px;
+        }
+
+        .chain-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.02);
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .chain-badge:hover { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); }
+        .chain-badge .chain-icon { font-size: 20px; }
+
+        /* Install */
+        .install {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 0 32px 80px;
+        }
+
+        .code-block {
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.06);
+            background: rgba(0,0,0,0.4);
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .code-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .code-bar .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .code-bar .dot:nth-child(1) { background: #ef4444; }
+        .code-bar .dot:nth-child(2) { background: #eab308; }
+        .code-bar .dot:nth-child(3) { background: #22c55e; }
+        .code-bar span { margin-left: 8px; font-size: 11px; color: rgba(255,255,255,0.2); font-family: 'JetBrains Mono', monospace; }
+
+        .code-content {
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .code-content .c { color: rgba(255,255,255,0.2); }
+        .code-content .k { color: #3b82f6; }
+        .code-content .s { color: #a78bfa; }
+        .code-content .f { color: #f59e0b; }
+        .code-content .fn { color: #10b981; }
+
+        /* CTA */
+        .cta {
+            text-align: center;
+            padding: 80px 32px;
+        }
+
+        .cta h2 { font-size: 32px; font-weight: 800; margin-bottom: 12px; }
+        .cta p { color: rgba(255,255,255,0.35); margin-bottom: 28px; }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 24px 32px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            color: rgba(255,255,255,0.2);
+            font-size: 12px;
+        }
+
+        footer a { color: rgba(255,255,255,0.4); text-decoration: none; }
+        footer a:hover { color: #fff; }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 44px; letter-spacing: -1.5px; }
+            .hero { padding: 100px 20px 40px; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .stats { flex-direction: column; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-ocean"></div>
+    <div class="particles">
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div>
+    </div>
+
+    <div class="wrapper">
+        <nav>
+            <div class="logo">
+                <span class="logo-whale">🐋</span>
+                <span>Whale Tracker</span>
+            </div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#install">Install</a>
+            </div>
+            <a href="https://github.com/bizernam-cyber/whale-tracker-agent" class="nav-gh">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                GitHub
+            </a>
+        </nav>
+
+        <!-- Hero -->
+        <section class="hero">
+            <div class="hero-eyebrow">Open Source · v0.1.0 · MIT</div>
+            <h1>
+                <div class="line1">Track Every</div>
+                <div class="line2">Whale Move</div>
+            </h1>
+            <p class="hero-sub">Autonomous AI agent that monitors whale wallets across multiple blockchains, detects patterns in real-time, and alerts you before the market moves.</p>
+            <div class="hero-btns">
+                <a href="https://github.com/bizernam-cyber/whale-tracker-agent" class="btn-glow">⭐ Star on GitHub</a>
+                <a href="#install" class="btn-ghost">Get Started →</a>
+            </div>
+
+            <!-- Terminal -->
+            <div class="terminal-wrap">
+                <div class="term-bar">
+                    <div class="term-dot"></div><div class="term-dot"></div><div class="term-dot"></div>
+                    <span class="term-title">whale-track monitor —ethereum</span>
+                </div>
+                <div class="term-body">
+                    <div><span class="t-prompt">$</span> <span class="t-cmd">whale-track</span> monitor <span class="t-flag">--chain</span> <span class="t-arg">ethereum</span> <span class="t-flag">--min-amount</span> <span class="t-arg">100</span></div>
+                    <br>
+                    <div><span class="t-whale">🐋 Starting whale monitor on ethereum</span></div>
+                    <div><span class="t-dim">Min amount: 100 ETH ($300,000)</span></div>
+                    <br>
+                    <div class="t-dim">─────────────────────────────────────</div>
+                    <div><span class="t-whale">🐋 WHALE ALERT — Binance Hot Wallet</span></div>
+                    <div><span class="t-dim">Chain: ETHEREUM | 0x28C6c0...5549</span></div>
+                    <br>
+                    <div><span class="t-pattern critical">🔴 DUMP</span> <span class="t-cyan">Net outflow of 2,450 ETH over 6h</span></div>
+                    <div><span class="t-pattern high">🟠 LARGE TRANSFER</span> <span class="t-cyan">Transfer of 1,200 ETH ($3.6M)</span></div>
+                    <br>
+                    <div><span class="t-dim">📊 Recent Activity (8 txs):</span></div>
+                    <div><span class="t-dim">  → 1,200.00 ETH (send)</span></div>
+                    <div><span class="t-dim">  → 800.00 ETH (send)</span></div>
+                    <div><span class="t-dim">  ← 50.00 ETH (receive)</span></div>
+                    <br>
+                    <div><span class="t-green">🧠 Analysis:</span></div>
+                    <div><span class="t-dim">Binance hot wallet moving significant ETH to cold storage</span></div>
+                    <div><span class="t-dim">or OTC. Bearish signal — potential sell pressure incoming.</span></div>
+                    <div><span class="t-dim">Confidence: 7/10</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats -->
+        <section class="stats">
+            <div class="stat"><div class="stat-num">4</div><div class="stat-label">Chains</div></div>
+            <div class="stat"><div class="stat-num">5</div><div class="stat-label">Patterns</div></div>
+            <div class="stat"><div class="stat-num">14</div><div class="stat-label">Tests</div></div>
+            <div class="stat"><div class="stat-num">3</div><div class="stat-label">Alerts</div></div>
+        </section>
+
+        <!-- Features -->
+        <section class="features" id="features">
+            <div class="section-head">
+                <div class="section-tag">Features</div>
+                <h2>Everything you need to track whales</h2>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-emoji">⛓️</div>
+                    <h3>Multi-Chain</h3>
+                    <p>Ethereum, BSC, Base, Arbitrum — all EVM-compatible chains with a single unified scanner.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-emoji">🎯</div>
+                    <h3>Pattern Detection</h3>
+                    <p>5 patterns: accumulation, dump, large transfer, token rotation, and cross-chain bridge activity.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-emoji">📢</div>
+                    <h3>Real-Time Alerts</h3>
+                    <p>Telegram bot, Discord webhook, and Rich terminal dashboard. Never miss a whale move.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-emoji">🧠</div>
+                    <h3>AI Analysis</h3>
+                    <p>LLM-powered trading thesis for every detected pattern. Bull/bear/neutral with confidence score.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-emoji">📊</div>
+                    <h3>Portfolio Tracking</h3>
+                    <p>Track whale holdings, token allocation, and PnL across all monitored wallets.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-emoji">⚡</div>
+                    <h3>Smart Filtering</h3>
+                    <p>Configurable thresholds, time windows, and minimum amounts. Only alert on what matters.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Chains -->
+        <section class="chains">
+            <div class="section-tag">Supported Chains</div>
+            <h2 style="font-size:28px;font-weight:700;letter-spacing:-0.5px;">4 chains, one agent</h2>
+            <div class="chain-row">
+                <div class="chain-badge"><span class="chain-icon">⟠</span> Ethereum</div>
+                <div class="chain-badge"><span class="chain-icon">⬡</span> BNB Chain</div>
+                <div class="chain-badge"><span class="chain-icon">🔵</span> Base</div>
+                <div class="chain-badge"><span class="chain-icon">◆</span> Arbitrum</div>
+            </div>
+        </section>
+
+        <!-- Install -->
+        <section class="install" id="install">
+            <div class="section-head">
+                <div class="section-tag">Quick Start</div>
+                <h2>Running in 30 seconds</h2>
+            </div>
+
+            <div class="code-block">
+                <div class="code-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>install</span></div>
+                <div class="code-content">
+<span class="c"># Clone & install</span>
+<span class="k">git clone</span> <span class="s">https://github.com/bizernam-cyber/whale-tracker-agent.git</span>
+<span class="k">cd</span> whale-tracker-agent
+<span class="k">pip install</span> <span class="f">-e</span> .
+                </div>
+            </div>
+
+            <div class="code-block">
+                <div class="code-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>usage</span></div>
+                <div class="code-content">
+<span class="c"># Watch a whale</span>
+<span class="k">whale-track</span> watch <span class="s">0xd8dA6BF2...6045</span> <span class="f">--label</span> <span class="s">"Vitalik"</span>
+
+<span class="c"># Scan recent activity</span>
+<span class="k">whale-track</span> scan <span class="s">0xd8dA...6045</span> <span class="f">--days</span> <span class="s">7</span>
+
+<span class="c"># Real-time monitor</span>
+<span class="k">whale-track</span> monitor <span class="f">--chain</span> <span class="s">ethereum</span> <span class="f">--min-amount</span> <span class="s">100</span>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <div class="code-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>python api</span></div>
+                <div class="code-content">
+<span class="k">import</span> asyncio
+<span class="k">from</span> whale_tracker.agent <span class="k">import</span> WhaleTracker
+
+<span class="k">async def</span> <span class="fn">main</span>():
+    tracker = WhaleTracker()
+    <span class="k">await</span> tracker.watch(
+        <span class="s">"0xd8dA...6045"</span>,
+        chain=<span class="s">"ethereum"</span>,
+        label=<span class="s">"Vitalik"</span>
+    )
+    result = <span class="k">await</span> tracker.scan(
+        <span class="s">"0xd8dA...6045"</span>, days=<span class="s">7</span>
+    )
+    <span class="fn">print</span>(result[<span class="s">"patterns"</span>])
+
+asyncio.<span class="fn">run</span>(<span class="fn">main</span>())
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="cta">
+            <h2>Start tracking whales today</h2>
+            <p>Open source. Multi-chain. AI-powered analysis. Real-time alerts.</p>
+            <a href="https://github.com/bizernam-cyber/whale-tracker-agent" class="btn-glow">⭐ Star on GitHub</a>
+        </section>
+
+        <footer>
+            <p>Built by <a href="https://github.com/bizernam-cyber">bizernam-cyber</a> · MIT License</p>
+        </footer>
+    </div>
+</body>
+</html>
